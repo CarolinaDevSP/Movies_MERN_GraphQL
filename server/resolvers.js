@@ -1,17 +1,26 @@
-import {movies}  from "./database.js"
+//import {movies}  from "./database.js"
 import {v1 as uuid} from 'uuid'
 import { UserInputError } from "apollo-server"
+import './dbConect.js'
+import Movie from './models/movie.js'
+
 
 //metodos que van a resolver mis datos del schema
 const resolvers = {
     Query: {
-        movieCount: () => movies.length,
+        //movieCount: () => movies.length,
+        movieCount: () => Movie.collection.countDocuments(),
 
-        allMovies: () => movies,
+        //allMovies: () => movies,
+        allMovies: async (root,args) => {
+            return Movie.find({})
+        },
 
-        findMovie: (root,args) =>{
-            const {title} =args
-            return movies.find(movie =>movie.title === title)
+        findMovie: async (root,args) =>{
+            const { title } = args
+            //return movies.find(movie =>movie.title === title)
+            return await Movie.findOne({ title })
+
         }
         
 
@@ -21,24 +30,48 @@ const resolvers = {
     Mutation: {
         
         addMovie: (root, args) => {
+
+            /*
             //haciendo validaciones
             if( movies.find(mv => mv.title ===args.title)){
                 throw new UserInputError('el titulo debe ser unico', {
                     invalidArgs: args.title
                 })
-            }
+            }*/
+            const movie = new Movie({...args})
+            return movie.save()
+
+            /*
             const movie = {...args,id:uuid()}
             movies.push(movie)
             return movie
+            */
         },
 
-        editMovie: (root, args) =>{
+        editMovie: async(root, args) =>{
+            /*
             const movieIndex = movies.findIndex(mv => mv.id === args.id)
             if (movieIndex === -1) return null
             const movie = movies[movieIndex]
             const updatedMovie2 = { ...movie, title: args.title }
             movies[movieIndex]=updatedMovie2
             return updatedMovie2
+            */
+           const movie = await Movie.findOne({ _id: args.id})
+           if(!movie) return
+                movie.title = args.title
+            try{
+                await movie.save()
+            } catch (error){
+                throw new UserInputError(error.message, {
+                    invalidArgs: args
+                })
+            }
+           return movie
+            /** const movie = await Movie.findOne({ _id: args.id})
+                movie.title = args.title
+                return movie.save() */
+
         },
 
 

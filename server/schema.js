@@ -7,7 +7,7 @@ const typeDefinitions = gql`
     }
 
    type Movie{
-        id:ID!
+        _id:ID!
         image: String!
         title: String!
         rating: String
